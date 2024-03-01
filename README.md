@@ -1,5 +1,5 @@
 # GARP Request Script
-This script, `garp.sh`, can be used to send broadcast Gratuitous ARP (GARP) requests in the VLAN where the SVIs are configured with VARP configuration. 
+This script, `send_garp.sh`, can be used to send broadcast Gratuitous ARP (GARP) requests in the VLAN where the SVIs are configured with VARP configuration. 
 Example: 
 ```
 ip virtual-router mac-address 00:1c:73:00:09:99
@@ -13,11 +13,11 @@ The GARP requests are sent for each SVI in their respective VRFs. The script use
 This is useful when we migrate from another FHRP protocol and the mac-address linked to the default gateway changes: the hosts will then be able to refresh their ARP entries, reducing the downtime of the migration.
 
 # Usage
-1. Copy the garp.sh script to the switches in the `/mnt/flash/` directory.
+1. Copy the send_garp.sh script to the switches in the `/mnt/flash/` directory.
 2. Complete the migration activity for the new SVI to be up and reachable from the network.
 3. Execute the script as:
 ```
-bash /mnt/flash/garp.sh
+bash /mnt/flash/send_garp.sh
 ```
 
 # Example of packets sent to the network: 
