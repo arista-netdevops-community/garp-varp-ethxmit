@@ -4,7 +4,7 @@
 # <guillaume.vilar@arista.com>
 
 # This script is used to send GARP requests to the VLAN where the interface VLAN are configured with VARP command. 
-# Ex: sudo ip netns exec ns-VRF_NAME ethxmit --ip-src=172.16.0.1 --ip-dst=255.255.255.255  -S 00:1c:73:00:dc:01 -D ff:ff:ff:ff:ff:ff --arp=request vlan2000
+# Ex: sudo ip netns exec ns-VRF_NAME ethxmit --ip-src=172.16.0.1 --ip-dst=255.255.255.255  -S 00:1c:73:00:dc:01 -D ff:ff:ff:ff:ff:ff --arp=reply vlan2000
 
 # It will send GARP requests for each interface in the switch in each respectives VRFs.
 # The script will use the ethxmit tool to send the GARP requests. The ethxmit tool is a tool that allows to send Ethernet frames from a network namespace.
@@ -12,7 +12,7 @@
 # Warning: Only IPV4 is supported.
 
 
-IP_VIRTUAL_ROUTER_OUTPUT=$(FastCli -c "show ip virtual-router")
+IP_VIRTUAL_ROUTER_OUTPUT=$(FastCli -c "show ip virtual-router vrf all")
 echo "$IP_VIRTUAL_ROUTER_OUTPUT"
 
 VIRTUAL_MAC_ADDRESS=$(echo $IP_VIRTUAL_ROUTER_OUTPUT | grep "MAC address" | awk '{print $9}')
@@ -45,9 +45,9 @@ do
 
     # Building final command
     if [ "$VRF_NAME" == "default" ]; then
-      CMD="sudo ip netns exec $VRF_NAME ethxmit --ip-src=$IP_ADDR --ip-dst=255.255.255.255  -S $VIRTUAL_MAC_ADDRESS -D ff:ff:ff:ff:ff:ff --arp=request $INT_NAME_LOWER_CASE"
+      CMD="sudo ip netns exec $VRF_NAME ethxmit --ip-src=$IP_ADDR --ip-dst=255.255.255.255  -S $VIRTUAL_MAC_ADDRESS -D ff:ff:ff:ff:ff:ff --arp=reply $INT_NAME_LOWER_CASE"
     else
-        CMD="sudo ip netns exec ns-$VRF_NAME ethxmit --ip-src=$IP_ADDR --ip-dst=255.255.255.255  -S $VIRTUAL_MAC_ADDRESS -D ff:ff:ff:ff:ff:ff --arp=request $INT_NAME_LOWER_CASE"
+        CMD="sudo ip netns exec ns-$VRF_NAME ethxmit --ip-src=$IP_ADDR --ip-dst=255.255.255.255  -S $VIRTUAL_MAC_ADDRESS -D ff:ff:ff:ff:ff:ff --arp=reply $INT_NAME_LOWER_CASE"
     fi
     echo "Executing: $CMD"
     eval $CMD
