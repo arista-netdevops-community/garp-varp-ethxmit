@@ -10,10 +10,10 @@ interface Vlan100
    ip virtual-router address 10.0.0.1
 ```
 The GARP requests are sent for each SVI in their respective VRFs. The script uses the ethxmit tool to send the GARP requests.  
-This is useful when we migrate from another FHRP protocol and the mac-address linked to the default gateway changes: the hosts will then be able to refresh their ARP entries, reducing the downtime of the migration.
+This is useful when the mac-address linked to the default gateway changes (for example when migrating from another FHRP protocol), and we want all the hosts in the network to refresh their ARP entries to reduce the downtime of the migration.
 
 # Usage
-1. Copy the send_garp.sh script to the switches in the `/mnt/flash/` directory.
+1. Copy the `send_garp.sh` script to the switches in the `/mnt/flash/` directory.
 2. Complete the migration activity for the new SVI to be up and reachable from the network.
 3. Execute the script as:
 ```
