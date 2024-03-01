@@ -1,4 +1,4 @@
-# GARP Request Script
+# Arista GARP Request Script
 This script, `send_garp.sh`, can be used to send broadcast Gratuitous ARP (GARP) requests in the VLAN where the SVIs are configured with VARP configuration. 
 Example: 
 ```
