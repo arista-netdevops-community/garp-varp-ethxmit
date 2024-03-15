@@ -12,8 +12,8 @@ interface Vlan100
 The GARP requests are sent for each SVI in their respective VRFs. The script uses the `ethxmit` command to send the GARP requests to all the interfaces part of the VLAN.  
 This is useful when the mac-address linked to the default gateway changes (for example when migrating from another FHRP protocol), and we want all the hosts in the network to refresh their ARP entries to reduce the downtime of the migration.
 
-# Pre-requisite: 
-1. Have a user with access to the command `bash` and `sudo` command.  
+# Prerequisite: 
+1. A user with access to the command `bash` and `sudo` command.  
 Verification: 
 ```
 enable
