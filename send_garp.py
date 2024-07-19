@@ -24,7 +24,7 @@ def get_ethxmit_command(vrf, vip, vmac, int):
     return cmd
 
 # Get virtual MAC to advertise
-def get_virtual_mac(show_ip_interface_output):
+def get_virtual_mac(show_ip_virtual_router_output):
     for mac in show_ip_virtual_router_output["virtualMacs"]:
         if mac["macType"] != "varp":
             continue
@@ -57,7 +57,7 @@ def handle_ip_address_virtual(show_ip_interface_output, vmac):
 
         # ignore the interface if it's not a virtual interface or not up.
         if vip == "0.0.0.0":
-            print("Ignoring interface ['%s'] as it not configured with 'ip address virtual'." % interface['name'])
+            print("Ignoring interface ['%s'] as it is not configured with 'ip address virtual'." % interface['name'])
             continue
         if interface["lineProtocolStatus"] != "up" or interface["interfaceStatus"] != "connected":
             print("Ignoring ['%s'] as the interface is not up." % interface['name'])
@@ -76,6 +76,6 @@ if __name__ == "__main__":
     show_ip_interface_output = json.loads(subprocess.check_output(["FastCli", "-c", "show ip interface | json"]))
     show_ip_virtual_router_output = json.loads(subprocess.check_output(["FastCli", "-c", "show ip virtual-router vrf all | json"]))
     
-    vmac = get_virtual_mac(show_ip_interface_output)
+    vmac = get_virtual_mac(show_ip_virtual_router_output)
     handle_varp(show_ip_virtual_router_output, vmac)
     handle_ip_address_virtual(show_ip_interface_output, vmac)
