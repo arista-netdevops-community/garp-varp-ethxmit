@@ -29,8 +29,8 @@ def get_virtual_mac(show_ip_virtual_router_output):
         if mac["macType"] != "varp":
             continue
         virtual_mac_to_advertise =  mac["macAddress"]
-        if virtual_mac_to_advertise == "":
-            print("ERROR - No virtual mac address found, aborting")
+        if virtual_mac_to_advertise == "" or virtual_mac_to_advertise == "00:00:00:00:00:00":
+            print("ERROR - No virtual mac address found, aborting ('show ip virtual-router vrf all | json' returned an empty or '00:00:00:00:00:00' mac address).")
             sys.exit(1)
     print("virtual MAC is: ['%s']" % virtual_mac_to_advertise)
     return virtual_mac_to_advertise
@@ -73,8 +73,8 @@ def handle_ip_address_virtual(show_ip_interface_output, vmac):
 
 if __name__ == "__main__":
     # Loading output of commands
-    show_ip_interface_output = json.loads(subprocess.check_output(["FastCli", "-c", "show ip interface | json"]))
     show_ip_virtual_router_output = json.loads(subprocess.check_output(["FastCli", "-c", "show ip virtual-router vrf all | json"]))
+    show_ip_interface_output = json.loads(subprocess.check_output(["FastCli", "-c", "show ip interface | json"]))
     
     vmac = get_virtual_mac(show_ip_virtual_router_output)
     handle_varp(show_ip_virtual_router_output, vmac)
