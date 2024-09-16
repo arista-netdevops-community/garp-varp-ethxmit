@@ -1,4 +1,8 @@
 #!/usr/bin/python
+# Copyright (C) 2024 Arista Networks, Inc. - Guillaume Vilar
+# <guillaume.vilar@arista.com>
+
+# Warning: Only IPV4 is supported.
 
 import json
 import sys
