@@ -1,5 +1,5 @@
 # Arista Send GARP Request Script
-This script, `send_garp.sh`, can be used to send broadcast Gratuitous ARP (GARP) requests in the VLAN where the SVIs are configured with VARP configuration. 
+This script, `send_garp.py`, can be used to send broadcast Gratuitous ARP (GARP) requests in the VLAN where the SVIs are configured with VARP or 'ip address virtual' configuration.  
 Example: 
 ```
 ip virtual-router mac-address 00:1c:73:00:09:99
@@ -21,17 +21,41 @@ bash sudo ls /mnt/flash
 ```
 > Note: The default `network-operator` role doesn't allow the `bash` command, and thus, a user that is assigned that role cannot execute the script.  
 
+
+
 # Usage
-1. Copy the `send_garp.sh` script to the switches in the `/mnt/flash/` directory.
+1. Copy the `send_garp.py` script to the switches in the `/mnt/flash/` directory.
 2. Complete the migration activity for the new SVI to be up and reachable from the network.
 3. Execute the script with the command:
 ```
-run enable ; bash bash /mnt/flash/send_garp.sh
+run enable ; bash python /mnt/flash/send_garp.py -a
 ```
+
+It is also possible to specify the VLAN where the GARP will be sent in case we want to migrate one VLAN at a time, with the `vlan` keyword.  
+Example: 
+```
+run enable ; bash python /mnt/flash/send_garp.py vlan100
+```
+
+Help message: 
+```
+$ python send_garp.py --help
+usage: send_garp.py [-h] [-a] [vlan]
+
+Send GARP packet in a VLAN or all VLANs.
+
+positional arguments:
+  vlan        VLAN in which the GARP should be send to.
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -a          Match all the VLANs configured with VARP or 'ip address virtual'
+```
+
 
 # Example of output
 ```
-switch# run enable ; bash bash /mnt/flash/send_garp.sh
+switch# run enable ; bash python /mnt/flash/send_garp.py -a
 #enable
 #bash bash /mnt/flash/send_garp.sh
 Processing output: 
