@@ -7,7 +7,7 @@ import os
 import argparse
 
 # Handling of arguments
-parser = argparse.ArgumentParser(description='Send GARP in a VLAN or all VLAN')
+parser = argparse.ArgumentParser(description='Send GARP packet in a VLAN or all VLANs')
 # Add command-line arguments
 parser.add_argument("vlan", type=str, nargs='?', help="VLAN in which the GARP should be send to.")
 parser.add_argument('-a', action='store_true', help="Match all the VLANs configured with VARP or 'ip address virtual'")
@@ -91,7 +91,7 @@ def handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_
 if __name__ == "__main__":
     # Parse the command-line arguments
     args = parser.parse_args()
-    # Custom logic: Ensure that either vlan is provided, or -a is present
+    # Parsing logic: ensure that either a vlan is provided, or -a is present
     if not args.a and args.vlan is None:
         parser.error("You must specify either a VLAN or use the '-a' flag to match all VLANs. Ex: 'python send_garp.py vlan10' or 'python send_garp.py -a'")
 
