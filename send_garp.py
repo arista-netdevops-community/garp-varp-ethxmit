@@ -18,8 +18,8 @@ parser.add_argument('-a', action='store_true', help="Match all the VLANs configu
 
 
 # Run command and check output
-def run_command(command):
-    print("Running command: ['%s']" % command)
+def run_command(vlan_name, command):
+    print("Running command for '%s': '%s'" % (vlan_name, command))
     output = os.system(command)
     if output != 0:
         print("ERROR - return code %d for command: ['%s']" % (output, command))
@@ -52,7 +52,8 @@ def handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_
     print("====== 1. VARP ======")
     for virtual_router in show_ip_virtual_router_output["virtualRouters"]:
         if not is_all_vlan_selected and vlan_selected.lower() != virtual_router["interface"].lower():
-            print("Ignoring ['%s'] as the interface is not selected." % virtual_router['interface'])
+            # Keeping that print for an eventual verbose mode.
+            # print("Ignoring ['%s'] as the interface is not selected." % virtual_router['interface'])
             continue
         
         if virtual_router["state"] != "active":
@@ -63,7 +64,7 @@ def handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_
         interface_lower_case = virtual_router["interface"].lower()
         for vip in virtual_router["virtualIps"]:
             cmd = get_ethxmit_command(vrf, vip["ip"], vmac, interface_lower_case)
-            run_command(cmd)
+            run_command(interface_lower_case, cmd)
 
 
 # Send GARP for 'ip address virtual' IP addresses
@@ -74,15 +75,18 @@ def handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_
 
         # ignore the interface if it's not a virtual interface or not up.
         if vip == "0.0.0.0":
-            print("Ignoring interface ['%s'] as it is not configured with 'ip address virtual'." % interface['name'])
+            # Keeping that print for an eventual verbose mode.
+            # print("Ignoring interface ['%s'] as it is not configured with 'ip address virtual'." % interface['name'])
+            continue
+        if not is_all_vlan_selected and vlan_selected.lower() != interface["name"].lower():
+            # Keeping that print for an eventual verbose mode.
+            # print("Ignoring ['%s'] as the interface is not selected." % interface["name"])
             continue
         if interface["lineProtocolStatus"] != "up" or interface["interfaceStatus"] != "connected":
             print("Ignoring ['%s'] as the interface is not up." % interface['name'])
             continue
         
-        if not is_all_vlan_selected and vlan_selected.lower() != interface["name"].lower():
-            print("Ignoring ['%s'] as the interface is not selected." % interface["name"])
-            continue
+        
 
         # Modifying vrf part to match the linux 'namespace' way in case of non-default vrf
         vrf = get_vrf_name_in_ns_format(interface["vrf"])
@@ -90,7 +94,7 @@ def handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_
         vlan_lower_case = interface["name"].lower()
         
         cmd = get_ethxmit_command(vrf, vip, vmac, vlan_lower_case)
-        run_command(cmd)
+        run_command(vlan_lower_case, cmd)
 
 if __name__ == "__main__":
     # Parse the command-line arguments
