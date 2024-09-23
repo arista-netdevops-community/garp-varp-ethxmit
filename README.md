@@ -11,11 +11,11 @@ interface Vlan200
    vrf RED
    ip address virtual 172.16.200.1/24
 ```
-The GARP requests are sent for each SVI in their respective VRFs. The script uses the `ethxmit` command to send the GARP requests to all the interfaces part of the VLAN.  
-This is useful when the mac-address linked to the default gateway changes (for example when migrating from another FHRP protocol), and we want all the hosts in the network to refresh their ARP entries to reduce the downtime of the migration.
+The GARP requests are sent for each SVI in their respective VRFs. The script uses the `ethxmit` command to send the GARP requests to all the interfaces that are part of the VLAN.  
+This is useful when the MAC address linked to the default gateway changes (for example when migrating from another FHRP protocol), and we want all the hosts in the network to refresh their ARP entries to reduce the downtime of the migration.
 
 # Prerequisite: 
-1. A user with access to the command `bash` and `sudo` command.  
+1. A user with access to the `bash` and `sudo` commands.  
 Verification: 
 ```
 enable
@@ -33,10 +33,15 @@ bash sudo ls /mnt/flash
 run enable ; bash python /mnt/flash/send_garp.py -a
 ```
 
-It is also possible to specify the VLAN where the GARP will be sent in case we want to migrate one VLAN at a time, with the `vlan` keyword.  
+It is also possible to specify the VLAN to which the GARP will be sent in case we want to migrate one VLAN at a time.  
 Example: 
 ```
 run enable ; bash python /mnt/flash/send_garp.py vlan100
+```
+Alternatively, we can specify a list of VLANs.  
+Example:
+```
+run enable ; bash python /mnt/flash/send_garp.py vlan100,200,300
 ```
 
 Help message: 
@@ -44,10 +49,11 @@ Help message:
 $ python send_garp.py --help
 usage: send_garp.py [-h] [-a] [vlan]
 
-Send GARP packet in a VLAN or all VLANs.
+Send GARP packet in a VLAN, a list of VLANs or all VLANs configured.
 
 positional arguments:
-  vlan        VLAN in which the GARP should be send to.
+  vlan        Vlan in which the GARP should be sent to (ex: vlan100) or comma
+              separated list of VLANs (ex: vlan100,200).
 
 optional arguments:
   -h, --help  show this help message and exit

@@ -10,10 +10,12 @@ import subprocess
 import os
 import argparse
 
+ERROR_MESSAGE = "ERROR: You must specify either a VLAN, a list of VLANs or use the '-a' flag to match all VLANs configured. Ex: 'python send_garp.py vlan10', 'python send_garp.py vlan10,20', or 'python send_garp.py -a'"
+
 # Handling of arguments
-parser = argparse.ArgumentParser(description='Send GARP packet in a VLAN or all VLANs')
+parser = argparse.ArgumentParser(description='Send GARP packet in a VLAN, a list of VLANs or all VLANs configured.')
 # Add command-line arguments
-parser.add_argument("vlan", type=str, nargs='?', help="VLAN in which the GARP should be send to.")
+parser.add_argument("vlan", type=str, nargs='?', help="Vlan in which the GARP should be sent to (ex: vlan100) or comma separated list of VLANs (ex: vlan100,200).")
 parser.add_argument('-a', action='store_true', help="Match all the VLANs configured with VARP or 'ip address virtual'")
 
 
@@ -49,7 +51,6 @@ def get_virtual_mac(show_ip_virtual_router_output):
 
 # Sending GARP for VARP IP addresses
 def handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_selected):
-    print("====== 1. VARP ======")
     for virtual_router in show_ip_virtual_router_output["virtualRouters"]:
         if not is_all_vlan_selected and vlan_selected.lower() != virtual_router["interface"].lower():
             # Keeping that print for an eventual verbose mode.
@@ -69,7 +70,6 @@ def handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_
 
 # Send GARP for 'ip address virtual' IP addresses
 def handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_all_vlan_selected):
-    print("====== 2. 'ip address virtual' ======")
     for interface in show_ip_interface_output["interfaces"].values():
         vip = interface["interfaceAddress"]["virtualIp"]["address"]
 
@@ -98,19 +98,42 @@ def handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_
 
 if __name__ == "__main__":
     # Parse the command-line arguments
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+    except SystemExit as e:
+        if e.code != 0:  # Only print ERROR_MESSAGE if the exit code is not 0 (to avoid hitting that when displaying the help option.)
+            print(ERROR_MESSAGE)
+            parser.print_help()
+        sys.exit(e.code)
     # Parsing logic: ensure that either a vlan is provided, or -a is present
     if not args.a and args.vlan is None:
-        parser.error("You must specify either a VLAN or use the '-a' flag to match all VLANs. Ex: 'python send_garp.py vlan10' or 'python send_garp.py -a'")
+        parser.error(ERROR_MESSAGE)
 
     # Access the values of the arguments
-    vlan_selected = args.vlan
+    vlans_inputs = args.vlan
     is_all_vlan_selected = args.a
+
+    # vlans_inputs is a string with eventually commas to separate VLANs (ex: vlan100,vlan200).
+    # If we want to support '-' notation, (ex: vlan100-150), that would be the location to do that.
+    if vlans_inputs != None:
+        vlan_selected_list = vlans_inputs.split(",")
+        # Adding eventually "vlan" string in front of only digit vlan name (ex: ["vlan100", "200"] --> ["vlan100", "vlan200"])
+        vlan_selected_list = [ "vlan"+item if item.isdigit() else item for item in vlan_selected_list ]
 
     # Loading output of commands
     show_ip_virtual_router_output = json.loads(subprocess.check_output(["FastCli", "-c", "show ip virtual-router vrf all | json"]))
     show_ip_interface_output = json.loads(subprocess.check_output(["FastCli", "-c", "show ip interface | json"]))
     
     vmac = get_virtual_mac(show_ip_virtual_router_output)
-    handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_selected)
-    handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_all_vlan_selected)
+
+    # Rewriting the list of vlan selected in case 'all the vlan' option is selected ('-a' option).
+    if is_all_vlan_selected:
+        vlan_selected_list = ['all']
+    
+    # Go through each vlan selected, and handle both VARP and IP address virtual
+    print("====== 1. VARP ======")
+    for vlan_selected in vlan_selected_list:
+        handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_selected)
+    print("====== 2. 'ip address virtual' ======")
+    for vlan_selected in vlan_selected_list:
+        handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_all_vlan_selected)
