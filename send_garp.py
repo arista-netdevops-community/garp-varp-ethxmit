@@ -17,14 +17,17 @@ parser = argparse.ArgumentParser(description='Send GARP packet in a VLAN, a list
 # Add command-line arguments
 parser.add_argument("vlan", type=str, nargs='?', help="Vlan in which the GARP should be sent to (ex: vlan100) or comma separated list of VLANs (ex: vlan100,200).")
 parser.add_argument('-a', action='store_true', help="Match all the VLANs configured with VARP or 'ip address virtual'")
+parser.add_argument('-n', '--dry-run', action='store_true', help="Do not execute ethxmit commands, just print them.")
 
 
 # Run command and check output
-def run_command(vlan_name, command):
-    print("Running command for '%s': '%s'" % (vlan_name, command))
-    output = os.system(command)
-    if output != 0:
-        print("ERROR - return code %d for command: ['%s']" % (output, command))
+def run_command(vlan_name, command, dry_run):
+    dry_run_message = " [DRY-RUN]" if dry_run else ""
+    print("Running command for '%s': '%s'%s" % (vlan_name, command, dry_run_message))
+    if not dry_run:
+        output = os.system(command)
+        if output != 0:
+            print("ERROR - return code %d for command: ['%s']" % (output, command))
 
 # Return vrf name in ns format; ex: default --> default ; blue --> ns-blue
 def get_vrf_name_in_ns_format(vrf_name):
@@ -50,7 +53,7 @@ def get_virtual_mac(show_ip_virtual_router_output):
     return virtual_mac_to_advertise
 
 # Sending GARP for VARP IP addresses
-def handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_selected):
+def handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_selected, dry_run):
     for virtual_router in show_ip_virtual_router_output["virtualRouters"]:
         if not is_all_vlan_selected and vlan_selected.lower() != virtual_router["interface"].lower():
             # Keeping that print for an eventual verbose mode.
@@ -65,11 +68,11 @@ def handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_
         interface_lower_case = virtual_router["interface"].lower()
         for vip in virtual_router["virtualIps"]:
             cmd = get_ethxmit_command(vrf, vip["ip"], vmac, interface_lower_case)
-            run_command(interface_lower_case, cmd)
+            run_command(interface_lower_case, cmd, dry_run)
 
 
 # Send GARP for 'ip address virtual' IP addresses
-def handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_all_vlan_selected):
+def handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_all_vlan_selected, dry_run):
     for interface in show_ip_interface_output["interfaces"].values():
         vip = interface["interfaceAddress"]["virtualIp"]["address"]
 
@@ -94,7 +97,7 @@ def handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_
         vlan_lower_case = interface["name"].lower()
         
         cmd = get_ethxmit_command(vrf, vip, vmac, vlan_lower_case)
-        run_command(vlan_lower_case, cmd)
+        run_command(vlan_lower_case, cmd, dry_run)
 
 if __name__ == "__main__":
     # Parse the command-line arguments
@@ -112,6 +115,7 @@ if __name__ == "__main__":
     # Access the values of the arguments
     vlans_inputs = args.vlan
     is_all_vlan_selected = args.a
+    dry_run = args.dry_run
 
     # vlans_inputs is a string with eventually commas to separate VLANs (ex: vlan100,vlan200).
     # If we want to support '-' notation, (ex: vlan100-150), that would be the location to do that.
@@ -130,10 +134,13 @@ if __name__ == "__main__":
     if is_all_vlan_selected:
         vlan_selected_list = ['all']
     
+    if dry_run:
+        print("Dry run mode, ethxmit commands will not be executed.")
+
     # Go through each vlan selected, and handle both VARP and IP address virtual
     print("====== 1. VARP ======")
     for vlan_selected in vlan_selected_list:
-        handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_selected)
+        handle_varp(show_ip_virtual_router_output, vmac, vlan_selected, is_all_vlan_selected, dry_run)
     print("====== 2. 'ip address virtual' ======")
     for vlan_selected in vlan_selected_list:
-        handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_all_vlan_selected)
+        handle_ip_address_virtual(show_ip_interface_output, vmac, vlan_selected, is_all_vlan_selected, dry_run)
