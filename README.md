@@ -56,8 +56,9 @@ positional arguments:
               separated list of VLANs (ex: vlan100,200).
 
 optional arguments:
-  -h, --help  show this help message and exit
-  -a          Match all the VLANs configured with VARP or 'ip address virtual'
+  -h, --help     show this help message and exit
+  -a             Match all the VLANs configured with VARP or 'ip address virtual'
+  -n, --dry-run  Do not execute ethxmit commands, just print them.
 ```
 
 
